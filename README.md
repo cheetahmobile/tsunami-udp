@@ -6,17 +6,25 @@ tsunami-udp
 Simple Usage
 ===========
  * Compile
-  ./recompile.sh 
+
+
+    ./recompile.sh 
 
  * Server
-  ./server/tsunamid
+
+
+    ./server/tsunamid
 
  * Client
-  ./client/tsunami 
+
+
+    ./client/tsunami 
 
  * Enjoy
-  ./server/tsunamid --help
-  ./client/tsunami help
+
+
+    ./server/tsunamid --help
+    ./client/tsunami help
 
 TODO
 ===========
