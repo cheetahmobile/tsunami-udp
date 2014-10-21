@@ -103,8 +103,8 @@ extern const u_int16_t REQUEST_RESTART;
 extern const u_int16_t REQUEST_STOP;
 extern const u_int16_t REQUEST_ERROR_RATE;
 
-#define  TS_TCP_PORT    46224   /* default TCP port of the remote server        */
-#define  TS_UDP_PORT    46224   /* default UDP port of the client / 47221       */
+#define  TS_TCP_PORT    51038   /* default TCP port of the remote server        */
+#define  TS_UDP_PORT    51038   /* default UDP port of the client               */
 
 #define  TS_BLOCK_ORIGINAL          'O'   /* blocktype "original block" */
 #define  TS_BLOCK_TERMINATE         'X'   /* blocktype "end transmission" */
