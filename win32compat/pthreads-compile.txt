@@ -1,0 +1,11 @@
+
+How to compile a new static lib (pthreadVC2.lib) in VC6 from cmd.exe command line:
+
+  VCVARS32.BAT
+  nmake clean VC-static
+
+Should work just the same for VC7.1 and VC 2005 (Express) etc.
+
+NOTE: VCVARS32.BAT is part of Visual Studio. For VC6 it 
+is usually found in C:\Program Files\Microsoft Visual Studio\VC98\Bin\
+

@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+#  RECPASS -- records one contiguous time slice to disk
+#
+#    ./recpass scanName recordTimeInSecs
+# 
+#  Assumes: 'wr' program is in /usr/bin/
+#
+#----------------------------------------------------------
+#  Defaults if not specified from command line: 
+#     recording time is 220s / 3min40s
+#----------------------------------------------------------
+#  !! Edit these before use: !! 
+#     - raiddir : RAID mount point and scan directory
+#     - FRAMESPERBLOCK : correct frame rate of experiment
+#----------------------------------------------------------
+
+# Where to place recorded files:
+raiddir=/raid/t
+
+# Recording rate specifed as frame rate:
+# 800 frames/blocks/s at 512Mbit/s.
+# 400 frames/blocks/s at 256Mbit/s.
+# 200 frames/blocks/s at 128Mbit/s.
+#    One frame/block at 32 tracks is 90000 bytes with parity, 80000 without.
+FRAMESPERBLOCK=200
+
+if [ "$1" == "" ]; then
+  echo " ./recpass scanname [seconds] "
+  exit
+fi
+
+# Default to 220 seconds, 3min40s.
+if [ "$2" == "" ]; then
+  SECS=220
+  echo "defaulting to 220sec"
+else
+  SECS=$2
+fi
+
+mkdir -p $raiddir
+filenm=$1
+
+TOTALBLKS=$(( $SECS * $FRAMESPERBLOCK ))
+
+# wr: blocksize totalblocks mode skip embed giga ndirs { path%d blks }
+# --
+# mode 0 for 32-bit; skip 0 samples, do not embed 1pps, no gigabit mode
+# split into smaller files (at 512Mbit/s: 8000 blks ~360MB == 10sec)
+# ./wr 80000 $TOTALBLKS 0 0 0 0 1 $dir/%06d 8000 < /dev/vsib
+# or just one big file:
+
+echo "./wr 80000 ${TOTALBLKS} 0 0 0 0 1 ${raiddir}/${filenm}.evn ${TOTALBLKS} < /dev/vsib"
+./wr 80000 $TOTALBLKS 0 0 0 0 1 $raiddir/$filenm.evn $TOTALBLKS < /dev/vsib

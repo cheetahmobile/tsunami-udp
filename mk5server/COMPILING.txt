@@ -1,0 +1,15 @@
+
+ In Makefile.am, "mk5tsunamid_CC = g++" is not supported by automake.
+ StreamStor library libssapi.a requires g++ version 3.x instead of gcc.
+
+ To compile mk5server:
+    ./configure
+    cd common
+    edit Makefile   : change "CC = gcc" into "CC = g++"
+    make
+    cd ../mk5server
+    edit Makefile   : change "CC = gcc" into "CC = g++"
+    make
+
+ (for quick libssapi.a link check: g++ mk5api.c ../common/libtsunami_common.a -lm ../common/libssapi.a -lpthread)
+

@@ -1,0 +1,35 @@
+
+#----------------------------------------------------------
+
+for idx in $(seq 0 $((${#SCANS[@]} / 5 - 1)))
+do
+
+  # -- get the data from the array
+  idx1=$(($idx * 5))
+  idx2=$(($idx1 + 1))
+  idx3=$(($idx1 + 2))
+  idx4=$(($idx1 + 3))
+  idx5=$(($idx1 + 4))
+  scanName=${SCANS[$idx1]}
+  scanYear=${SCANS[$idx2]}
+  scanDay=${SCANS[$idx3]}
+  scanStart=${SCANS[$idx4]}
+  scanDuration=${SCANS[$idx5]}
+
+  sfilename="$EXPT$USC$SID$USC${scanName}"
+  echo -e "\n\nNext scan in list: ${sfilename}\n"
+  dstart2 "${sfilename}.evn"
+
+  if (($? > 0)); then
+     # -- a past scan, decide what to do
+     if ((SKIPOLDSCANS>0)); then
+        echo "Skipping old scan - start time was in the past, now it is `date --utc +%Y-%m-%dT%H:%M:%S`"
+        continue
+     else 
+        echo "Not skipping old scan - start time was in the past, now it is `date --utc +%Y-%m-%dT%H:%M:%S`"
+     fi
+  fi
+
+  ./recpass "${sfilename}" $scanDuration
+
+done

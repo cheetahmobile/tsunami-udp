@@ -1,0 +1,472 @@
+-----------------------------------------------------------
+
+ CONTENTS
+
+ 0. Program Files
+ 1. Very Quick Guide
+ 2. Not So Quick Guide
+ 3. Settings in the Tsunami Client
+ 4. Settings in the Tsunami Server
+ 5. Getting Help
+ 6. Realtime Tsunami Notes
+ 7. Special Compile Settings
+ 8. Troubleshooting
+
+-----------------------------------------------------------
+
+ CHANGES
+ 15 Aug 2013:
+   - added server feature updates by Chris Phillips and Walter Brisken
+ 09 Nov 2007:
+   - added description of heartbeat timeout feature
+ 31 Oct 2006:
+   - some more troubleshooting help (check that no high CPU
+     programs in background, disk is fast enough, etc)
+ 21 Oct 2006:
+   - realtime now has a new UTC time format, recording length
+     can be specified in bytes
+ 17 Oct 2006: 
+   - realtime and normal applications now named differently
+   that is, tsunami/tsunamid and rttsunami/rttsunamid             
+
+-----------------------------------------------------------
+
+ 0. Program Files
+ =============
+
+ The program files are:
+
+   Application       Command      Alternatively call from
+   -----------------------------------------------------
+   Tsunami server    tsunamid     ./server/tsunamid
+   Tsunami client    tsunami      ./client/tsunami
+   Realtime server   rttsunamid   ./rtserver/rttsunamid
+   Realtime client   rttsunami    ./rtclient/rttsunami
+
+ If you have followed COMPILING.txt and the "sudo make install",
+ you can execute the program files from anywhere on the command
+ line.
+
+ If you omitted the "sudo make install", you'll have to call
+ the programs from within the source code directories.
+
+ For the general overview on how the Tsunami protocol
+ works, please see the older README.txt
+
+
+ 1. Very Quick Guide
+ ================
+
+ --Server--
+
+ On the server PC, go to the directory where you
+ have the files that should be served, and
+ start the Tsunami server with e.g.:
+ $ cd /where/my/files/are
+ $ tsunamid
+
+ The server serves files from its current
+ working directory.
+
+ To allow clients to use the "GET *" command,
+ start the Tsunami server with:
+ $ tsunamid *
+ or
+ $ tsunamid fileToServe1 fileToServe2 ...
+
+ For the realtime server extensions and its 
+ file naming conventions, see the Realtime 
+ Tsunami Notes section.
+
+ --Client--
+
+ On the client PC, start the command line client: 
+ $ cd /where/to/receive/files
+ $ tsunami
+
+ The client will store downloaded files into
+ the current working directory.
+
+ Usual commands in the client are like crude FTP:
+ tsunami> connect server.domain.com
+ tsunami> get filename
+ tsunami> get *
+
+
+ 2. Not So Quick Guide
+ ==================
+
+ Typical usage example where PC1 is the server and PC2 the client.
+
+ Preparations on PC1:
+
+ pc1$ cd /home/guest/outfiles/
+ pc1$ tsunamid *
+
+ Connecting from PC2:
+
+ pc2$ cd /home/guest/infiles/
+ pc2$ tsunami
+   tsunami> set rate 512M
+   rate = 512000000
+
+   tsunami> connect myserver.domain.com
+   Connected.
+
+   tsunami> get nameoffile
+   00     00      00      368      499     15.59   354.7    0.0       499    0.0   354.7    0.0       0  1      354.7
+   ...
+
+ Alternative way of connecting from PC2:
+  - all commands you would enter into tsunami's own command line you
+  may also concatenate onto the command line of your shell, i.e.:
+
+ pc2$ cd /home/guest/infiles/
+ pc2$ tsunami set rate 512M connect myserver.domain.com get nameoffile
+   tsunami>
+   00     00      00      368      499     15.59   354.7    0.0       499    0.0   354.7    0.0       0  1      354.7
+   ...
+   ...
+
+ If you use the "get *" command, you can automatically download several
+ files. Note if you use the above shell/command line format of concatenated
+ commands and your shell does globbing, you will have to use "get \*" with
+ a slash.
+
+
+ 3. Settings in the Tsunami Client
+ ============
+
+ Settings available in the Tsunami Client, and a short description:
+
+ $ tsunami
+ Tsunami Client for protocol rev 20061025
+ Revision: v1.1 devel cvsbuild 31
+ Compiled: Dec 15 2006 14:57:59
+
+ tsunami> set
+   server = localhost      -- to which currently connected
+   port = 46224            -- TCP control port on server
+   udpport = 46224         -- UDP receiving port on client to use
+   buffer = 20000000       -- size of the ring buffer in RAM in bytes
+   blocksize = 32768       -- how large UDP blocks to use
+   verbose = yes           -- give a bit more output
+   transcript = no         -- 'yes' to write all screen output to a transcript file,
+                              file naming is automatic in "2006-12-15-13-21-41.tsuc" style
+   ip = v4                 -- use ip version 'v4' or 'v6'
+   output = line           -- output statistics mode is 'line' for scrolling
+                              statistics, or 'screen' for a single updating page
+   rate = 650000000        -- the target transfer rate (you may use 'm','M','g','G' so
+                              for example '128M' or '1G')
+   error = 7.50%           -- maximum error rate to maintain by rate throttling
+   slowdown = 25/24        -- how fast to start throttling the rate
+   speedup = 5/6           -- how fast to recover and move up towards target rate again
+   history = 25%           -- weighting of past error rates in the throttling algorithm
+   lossless = yes          -- change to 'no' to allow data loss e.g. rate priority transfers
+   losswindow = 1000 msec  -- used if lossless='no', sets how old missing data should still be 
+                              requested again. If too old, data is considered lost.
+   blockdump = no          -- 'yes' to write a block bitmap dump to a file, shows
+                              packets that were not received as bit value 0,
+                              file format is 4 bytes (long) contains number of blocks (bits),
+                              followed by number of block count of bits, and two extra bytes
+                              that may be ignored
+   passphrase = default    -- specify a different non-default passphrase for login to the server
+
+   
+ 4. Settings in the Tsunami Server
+ ============
+
+ $ tsunamid --help
+   Usage: tsunamid [--verbose] [--transcript] [--v6] [--port=n] [--datagram=bytes] [--buffer=bytes]
+                [--hbtimeout=seconds] [--allhook=cmd] [--finishhook=cmd] [filename1 filename2 ...]
+
+   verbose or v : turns on verbose output mode
+   transcript   : turns on transcript mode for statistics recording
+   v6           : operates using IPv6 instead of (not in addition to!) IPv4
+   port         : specifies which TCP port on which to listen to incoming connections
+   secret       : specifies the shared secret for the client and server
+   client       : specifies an alternate client IP or host where to send data
+   datagram     : specifies the desired datagram size (in bytes)
+   buffer       : specifies the desired size for UDP socket send buffer (in bytes)
+   hbtimeout    : specifies the timeout in seconds for disconnect after client heartbeat lost
+   finishhook   : run command on transfer completion, file name is appended automatically
+   allhook      : run command on 'get *' to produce a custom file list for client downloads
+   filenames    : list of files to share for downloaded via a client 'GET *'
+
+ $ rttsunamid --help
+   Usage: tsunamid [--verbose] [--transcript] [--v6] [--port=n] [--datagram=bytes] [--buffer=bytes]
+                   [--hbtimeout=seconds] [--allhook=cmd] [--finishhook=cmd]
+				   [--vsibmode=mode] [--vsibskip=skip] [filename1 filename2 ...]
+   ...
+   vsibmode     : specifies the VSIB mode to use (see VSIB documentation for modes)
+   vsibskip     : a value N other than 0 will skip N samples after every 1 sample
+
+
+  --client=host option:
+  
+    The fast UDP data are always sent to the specified host or IP, instead of being
+	sent back to the TCP connection IP of the connected client. This allows 
+	a single client with two IP addresses (e.g. two Ethernet adapters with 
+	different IP). Be careful that the specified 'host' is correct and without
+	typos, otherwise an incorrect host is flooded with UDP data...
+
+  --hbtimeout=sec option:
+
+    The default 'hbtimeout' after the client heartbeat is lost is 15 seconds.
+
+    The heartbeat is identical to the packetloss report that the client sends to 
+	the server in 350ms or shorter intervals. The 'hbtimeout' behaviour after the first 
+	missing client packetloss report is briefly as follows:
+
+      The server interrupts the transfer after 'hbtimeout' seconds of
+      no client activity. This can happen at any completion %.
+      A backupping realtime server waits until all requested data (100%) has 
+      been stored to disk, and then waits for 'hbtimeout'.
+
+    The same in more detail:
+
+      - The file server 'tsunamid', or a realtime 'rttsunamid' that has _not_ been 
+        instructed to write a local backup copy of VSIB data, will both continue 
+        sending new UDP-packetized data while waiting for the next heartbeat.
+      - If no heartbeat is received within the hbtimeout time, the connection is closed.
+      - If an EOF of the TCP connection is encountered, the connection is closed
+        immediately without timeout checks.
+      - A realtime 'rttsunamid' that _has_ been instructed to write a local backup
+        copy of VSIB data will continue to send data, even if there is no feedback
+        from the client. 
+      - Even if an EOF is encountered, the connection is not closed.
+      - Only after the server has sent the last block of data (and thus the entire
+        requested VSIB data is complete on the disk), the hbtimeout setting
+        becomes effective.
+
+ --finishhook=cmd option:
+
+   If this is specified, then on completion of a file transfer the command is run with 
+   the filename appended.  For example, if --finishhook=rm is specified, the transfered 
+   file is simply removed (from the server) once it is transferred.  More complicated 
+   things could be done in a shell script, python program, or whatever, such as sending 
+   email notification, moving to a different directory, or ...
+
+ --allhook=cmd option: 
+ 
+   If this is specified, the provided program will be run and its output will be used as 
+   the file list to be transferred.  For example, if --allhook="ls -1" is supplied on the 
+   command line, the list of files in the local directory will be listed and queued for 
+   retrieval.  In a more complicated situation one could do file filtration based on filename 
+   on file date, or .
+
+
+
+ 5. Getting Help
+ ============
+
+ Server application, to get a list of command line options use:
+ $ tsunamid --help
+ 
+ Client application, to get a list of options use:
+ $ tsunami
+   tsunami> help
+ And to see the current settings in the client (not persistent
+ i.e. not stored between program restarts), use:
+   tsunami> set
+
+ Settings in the client can be changed using the "set" command
+ which has the format:
+   set [option] [value]
+
+ You should also read the README.txt.
+
+ Finally, look at the source code. :-)
+
+ You can also use the sourceforge project site
+   http://sourceforge.net/projects/tsunami-udp
+ to add a support request or send an email to the developer(s).
+
+
+
+ 6. Realtime Tsunami Notes
+ ======================
+ 
+ The realtime version of the tsunami applications uses the 
+ Metshovi VSIB card.
+
+ This section refers mainly to the realtime versions of 
+ the tsunami applications, namely, in the source code tree
+ these are the ./rtserver/tsunamid and ./rtclient/tsunami
+ applications.
+
+ --VSIB driver--
+
+ You'll need a post-01/2006 version of the vsib.c driver.
+ Tsunami tries to access the VSIB card via /dev/vsib.
+
+ If you try rates of 256Mbps and above, please check that
+ your VSIB driver is loaded with a bigbufsize of at least
+ 100MiB. For example 144MiB often set in the file /etc/modules, 
+ and the value is usually sufficient for 512Mbps:
+    # load vsib with 144M 
+    vsib bigbufsize=144000000
+
+ --Realtime Server--
+
+ The realtime server will read data from the VSIB card and send
+ the data over the network. 
+
+ The filename requested by the client in the "get" command
+ tells the realtime server when to start recording. If the
+ name is an EVN formatted time/date string, this will be used
+ as the starting time. Otherwise, recording starts right after
+ the next 1 second rollover.
+
+ If the file name contains a path i.e. the character "/", 
+ the server will locally create a file with that name. Data
+ streamed to the network will then also be saved into that
+ local file.
+
+ The "EVN" file naming convention with UTC time and optional 
+ recording length specified in bytes is as follows:
+
+    [exp]_[station]_[scan]_[yyyy]-[mm]-[dd]T[hh]:[mm]:[ss].vsi   
+    [exp]_[station]_[scan]_[yyyy]-[mm]-[dd]T[hh]:[mm]:[ss]_dl=[bytes].vsi
+
+    Where     
+    Exp:     experiment, arbitrary string
+    Station: 2-letter station ID like for example Mh, Jb, Wb, Mc, ...
+    Scan:    name of the scan, arbitrary, format often similar to "fr0089"
+    Date:    US order, month first
+    Time:    UTC time
+    Bytes:   dl file length in bytes, length of recording
+    
+ Examples:
+
+    Metshovi station, begin recording on 17th Oct 2006 at 12:25:30UTC
+  
+       exp01_mh_scan01_2006-10-17T12:25:30.vsi
+    
+    Same as above but also make a local backup on the server 
+    into the /i1/ directory (should be a fast RAID0 disk):
+  
+      /i1/exp01_mh_scan01_2006-10-17T12:25:30.vsi
+
+    Recording length specified to be 1536000000 bytes.
+    
+      exp01_mh_scan01_2006-10-17T12:25:30_dl=1536000000.vsi
+      
+
+ The default recording length is equal to the amount of bytes
+ in 4 minutes of 512 Mbps.      
+        
+ The VSIB recording mode can be specified from the
+ command line options (--vsibmode=x, --vsibskip=x).
+ 
+ If you use a version older than v1.1 cvsbuild 32, you
+ are limited to
+    > set blocksize 4096  [or 8192, 16384, 32768]
+ as other settings cause skips in the data.
+
+
+ --Realtime Client--
+
+ The realtime client will write back data from the network
+ to the VSIB card, i.e. is in "playback" mode. Again, the 
+ playback mode is hard-coded but now in
+   ./rtclient/vsibctl.c
+ [Note: realtime client untested after JR wrote it in 2003]
+
+ To transfer a file from memory/VSIB-in to disk, use the
+ realtime server and normal client i.e.:
+    pc1$ rttsunamid
+    pc2$ tsunami
+
+ To transfer a file from disk to VSIB-out, use the
+ normal server and realtime client i.e.:
+    pc1$ tsunamid
+    pc2$ rttsunami
+
+ To transfer a file from VSIB-in to VSIB-out, use the
+ realtime server and realtime client i.e.:
+    pc1$ rttsunamid
+    pc2$ rttsunami
+    (this is not fully tested yet)
+
+
+    
+ 7. Special Compile Settings
+ ========================
+
+ For real-time server:
+ 
+  ./rtserver/io.c 
+  
+    //#define MODE_34TH   
+    
+       uncomment to enable 3/4th rate transmission,
+       discards upper 4 channels (2 BBCs)
+                          
+ For normal client:
+  
+  ./client/protocol.c
+  
+    #define RETX_REQBLOCK_SORTING
+    
+       define to use linear sorting of blocks in the retransmit 
+       request, fast, discards duplicates, may improve disk I/O 
+       since more contiguous access on server side
+       
+    
+ 8. Troubleshooting
+ ===============
+
+ * If transfers are really slow, and the error rate is high,
+ check the following on both the client and server:
+
+   - no other programs should run in the background
+     and use lots of cpu: 
+     check with e.g. 'top'
+
+   - you are really writing to or reading from a fast 
+     RAID disk: 
+     check with for example 
+     'sudo hdparm -t /dev/md0' or
+     'sudo hdparm -t /dev/sdb' 
+     that the disk where you have the Tsunami data is
+     sufficiently fast compared to Tsunami target Mbps data rate
+     
+ * If no data goes through over the connection, check that
+ no firewalls are blocking the default TCP and UDP port 46224.
+ This can also be tested using the 'netcat' (or 'nc') linux/unix
+ command line tool.
+   pc1$ netcat -u -l -p 46224 
+   pc2$ netcat -u pc1.domain.com 46224
+ and typing in something into pc2 and hitting <enter> should
+ then appear on the pc1 as netcat output, unless there are
+ firewall problems.
+
+ Firewall settings, server side: TCP 46224 incoming allowed
+ Firewall settings, client side: UDP 46224 incoming allowed
+
+ * Another possibility is MTU mismatch and no path MTU discovery.
+ Tsunami uses a default block size of 32768 bytes. In the 
+ client you could change this to below 10 Mbit LAN MTU using
+ the client console command 
+   tsunami>  set blocksize 1430
+ and then reattempt the transfer (commands: connect, get). If
+ this works, then you or your ISP need to fix the network MTU.
+
+ * If you get "could not create socket on port xxx" errors, this
+ very likely means a zombie tsunamid or tsunami process is 
+ running. Try killing that process ('ps axuf', 'kill') or 
+ rebooting if it is really stuck.
+
+ * Try to avoid using the JFS file system (till kernel 2.6.18
+ or even later) together with Tsunami and RAID, as Tsunami disk 
+ thread blocking may hang JFS. In the worst case you loose all 
+ data on the file system. Other file systems like EXT3, XFS work 
+ just fine, so it is a JFS bug. 
+
+ * If problems persist, contact the developers or submit a bug report 
+ at http://sourceforge.net/projects/tsunami-udp
+
+ * If you use a version older than v1.1 cvsbuild 32, you are limited to
+    > set blocksize 4096  [or 8192, 16384, 32768]
+ as other settings cause skips in the data.

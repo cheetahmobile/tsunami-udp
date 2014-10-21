@@ -1,0 +1,70 @@
+
+#----------------------------------------------------------
+
+cliPID=0 # previous client process ID
+
+for idx in $(seq 0 $((${#SCANS[@]} / 5 - 1)))
+do
+
+  # -- get the data from the array
+  idx1=$(($idx * 5))
+  idx2=$(($idx1 + 1))
+  idx3=$(($idx1 + 2))
+  idx4=$(($idx1 + 3))
+  idx5=$(($idx1 + 4))
+  scanName=${SCANS[$idx1]}
+  scanYear=${SCANS[$idx2]}
+  scanDay=${SCANS[$idx3]}
+  scanStart=${SCANS[$idx4]}
+  scanDuration=${SCANS[$idx5]}
+
+
+  # -- wait until start of next scan
+  #    using HEADROOM startup safety margin
+
+  # sysSecs2start=`date --utc --date "01/01/$scanYear $scanStart + $((scanDay - 1)) days" +%s`
+  sysSecs2start=`date --utc --date "01/01/$scanYear + $((scanDay - 1)) days $scanStart " +%s`
+  sysSecsNow=`date --utc +%s`
+  waitTime=$((sysSecs2start - sysSecsNow - HEADROOM))
+  if ((waitTime>0)); then
+     echo "$0: waiting $waitTime s from now `date --utc +%Y-%m-%dT%H:%M:%S` to start the next scan ${scanName} (len ${scanDuration}s)"
+     sleep $waitTime;
+  else 
+     # -- a past scan, decide what to do
+     if ((SKIPOLDSCANS>0)); then
+        echo "$0 ERROR: start time in the past (now `date --utc +%Y-%m-%dT%H:%M:%S`), skipping scan ${scanName}"
+        continue
+     else 
+        echo "$0 WARNING: start time in the past (now `date --utc +%Y-%m-%dT%H:%M:%S`), beginning scan ${scanName} anyway"
+     fi
+  fi
+
+
+  # -- check and kill old client if still running (it shouldn't be running, unless the transfer went somehow wrong
+  #    or the HEADROOM setting is larger than the scheduled idle time between scans)
+
+  if ((cliPID>0)); then
+    	if ((`ps -p $cliPID | wc -l` > 1)); then
+           echo "$0 WARNING: old ./recpass-tsunami still running, now killing it before next scan"
+           kill -HUP $cliPID
+        fi
+  fi
+
+
+  # -- start scan download script in the background, and
+  #    go to sleep for the expected duration of the scan
+
+  echo "$0 : time is `date --utc +%Y-%m-%dT%H:%M:%S`"   # for debug/check...
+  echo "$0: invoking ./recpass-tsunami '$EXPT$USC$SID$USC${scanName}' $scanDuration & into background"
+  # tmStart=`date --utc +%s`
+
+  ./recpass-tsunami "$EXPT$USC$SID$USC${scanName}" $scanDuration &
+  cliPID=$!
+
+  echo "$0: sleeping..."
+  sleep $scanDuration
+
+done
+
+fg
+

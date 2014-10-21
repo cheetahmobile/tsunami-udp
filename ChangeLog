@@ -1,0 +1,182 @@
+The current Tsunami protocol version is: v1.1
+
+Improvements and protocol version compliant new features
+are added in the cvs builds.
+
+v1.1 CvsBuild 42
+  - changes to realtime server code:
+   - added EVN 2009 filename aux info parsing so that the
+     format with 'ccvvvvv' 2-char code plus value (versus old
+     format 'cc=vvvvv') is supported for the data length field
+
+v1.1 CvsBuild 41
+  - changed default 'rateadjust' to No
+
+v1.1 CvsBuild 40
+  - changes to client code:
+   - added 'rateadjust' setting: rate for next file transfer is set to 
+     the previously achieved effective throughput +20%
+   - at end of transfer, server now stopped first and disk flush done
+     after this, not vice versa, to further avoid kernel "UDP checksum error"
+     errors that are due to socket receive buffer overflow
+  - changes to server code:
+   - partial feedback messages now treated properly, instead
+     of blocking on TCP until full message and then discarding it
+   - transmit rate is throttled to 1/10th at the final block
+
+v1.1 CvsBuild 39
+  - changes to client code:
+   - client statistics output now shows state-flags
+   - smoother access to ring buffer
+   - fix sending of feedback even during pending transfer restart,
+     this gets rid of the "no hearbeat" server messages
+  - changes to server code:
+   - TCP uses read() and write() wrappers that insure full-size operations
+   - fix missing clears of some string buffers before receiving client strings
+   - fix Ubuntu Karmic compile warnings
+
+v1.1 CvsBuild 38
+  - unfortunately the include/tsunami-cvs-buildnr.h in the 38dev was already 38
+    so we skip this build and name the new one 39!
+
+v1.1 CvsBuild 38dev (testing version!)
+ - changes to client code:
+   - make use of "xfer->restart_wireclearidx" variable as upper limit to ignored blocks
+     after a REQUEST_RESTART - now even on very high loss networks the transfer won't get stuck
+   - transcript.c to show "mbyte" (mbyte_transmitted)
+   - show Mbit amount of File Data and real final throughput
+     - in these figures, transmit restarts and their "new" data are not counted as "throughput"
+   -...
+
+v1.1 CvsBuild 37:
+ - changes to server code:
+   - progress printf: current IPD target is printed as floating point not integer
+   - UDP packet spacing: spacing of small <=4kB packets was not accurate (too fast)
+                         on some systems, changed the delay/spacing method to iperf-style,
+                         seems much more accurate now accross 1..32kB packet sizes
+   - heartbeat lost: interval 350ms increased to 500ms
+
+v1.1 CvsBuild 36:
+ - changes to client code:
+   - client core receive loop refactored: shorter, more readable and more robust
+   - pending transmission-restart: on-wire blocks stored and not discarded
+   - threading: remaining blocks count is decremented in receive loop not io.c
+                to fix a suspected threading issue
+   - client feedback: feedback to server is sent even when the ringbuffer is full,
+                client no longer disconnected due to very slow disk and hbtimeout
+   - transfer statistics are improved: 
+        show goodput vs throughput
+        separate counts for received original and retransmitted blocks
+   - Mac OX X support: small changes (typecasts) to allow compile on Mac OS X
+ - changes to server code:
+   - Mac OX X support: small changes (typecasts) to allow compile on Mac OS X
+   - removed unused #include <mcheck.h> which is not present on Mac OS X
+   - rtserver Makefile.am '-lm' moved to correct place i.e. to LDFLAGS 
+
+v1.1 CvsBuild 35:
+ - server, rtserver now perform finer and more gradual rate
+   adjustment in the speed-up and slow-down phases
+   - current_ipd time (tsunami-server.h) is now double instead of int32
+
+v1.1 CvsBuild 34:
+ - server, rtserver main.c IPD delay call now uses tighter
+   delay adjust just like in the v1.2 petabit Tsunami version
+
+v1.1 CvsBuild 33:
+ - client code cleanup (client.h -> include/tsunami-client.h)
+ - rtclient write_vsib_block() now uses fwrite()
+ - cleaned out 64-bit compile warnings
+
+v1.1 CvsBuild 32:
+ - 'heartbeat lost' messages now spaced in at most 350ms intervals
+   and not shorter
+ - realtime server vsibctl.c now uses fread() not read(), now seeking
+   and reading from the VSIB no longer has to be multiples of 4096 bytes
+
+v1.1 CvsBuild 31:
+ - added proto_version and software_version into
+   transcripts of clients, servers
+ - servers disconnect on loss of client heartbeat
+   - added '--hbtimeout' server command line parameter, default 15s
+   - realtime server timeout behaviour: if local backup used, 
+     timeout termination not done earlier than at final 
+     TS_BLOCK_TERMINATE to insure local backup is complete
+   - file server timeout behaviour: as before, if no
+     reports from client in 15s then disconnect
+ - realtime server, if doing local backup, continues sending 
+   to the end even if client completely tcp-disconnected and
+   then eventually times out after last block sent/written
+
+v1.1 CvsBuild 30:
+ - cosmetic, printf() of 'dir' file lengths the proper unsigned int now
+ - 15s timeout only for file server, realtime server TODO
+
+v1.1 CvsBuild 29:
+ - fixed another Big Endian endiannes problem and now large transfers
+   work, too
+
+v1.1 CvsBuild 28:
+ - added early support for Big Endian platforms e.g. Playstation3,
+   to enable you have to edit ./common/Makefile.am before running 'configure' 
+
+v1.1 CvsBuild 27:
+ - file server and file client support shared file listing 
+   via the "dir" command (client/command.c command_dir()).
+
+v1.1 CvsBuild 26:
+ - added gapless_till_block client side counter that is later
+   needed by the 'tsunamifs' FUSE filesystem
+
+v1.1 CvsBuild 24:
+ - fixed client crashing with nForce2 server in Wettzell by
+   having recvfrom() not fill out packet source infos, these
+   infos were not used anywhere in the first place.
+ - server closes client connection after 15s timeout if no
+   client side TCP feedback during a transfer, 350ms is the
+   required feedback interval from the client so 15s is plenty
+
+v1.1 CvsBuild 22:
+ - real-time server, disabled throttling by VSIB and instead use again 
+   normal IPD wait as in file server (after a REQUEST_RESTART old blocks 
+   are sent as TS_BLOCK_ORIGINAL, but a VSIB does not throttle these old
+   ones, so it blasts at 1 Gbit/s and bombs...)
+ - client, ttp_request_retransmit additional check at start so that 
+   already received blocks are not queued up for later retransmit batch-request
+
+v1.1 CvsBuild 21:
+ - client, increased UDP port upping limit from 16 to 256 concurrent client 
+   download sessions, added a warning that shows current nr of reserved
+   client UDP ports
+ - client, enabled RETX_REQBLOCK_SORTING in Makefile.am
+ - server, changed block_new into block_type flag, and real-time server
+   skips throttling for TS_BLOCK_ORIGINAL only (VSIB does throttling) so
+   the final TS_BLOCK_TERMINATE block(s) are not blasted out at 1 Gbit/s
+
+v1.1 CvsBuild 20:
+ - added lossless, losswindow, blockdump settings to client transcript printouts
+ - fixed rtserver/Makefile.am, rtclient/Makefile.am to define -DVSIB_REALTIME
+ - server prints client IP before auth takes place
+ - added client transcript file to Octave plot generator script, under ./util/
+
+v1.1 CvsBuild 19:
+ - client, cleaned up the GET * code a lot, file list can contain up 
+   to 65530 files (although, as 'tsunamid' currently gets * files as 
+   command line arguments, the maximum argument length is the current limit)
+
+V1.1 CvsBuild 18:
+ - client, replaced 'set noretransmit' option with 'lossless' (yes/no) and 
+   'losswindow' (milliseconds) options to allow for near-time lossless transmissions 
+   e.g. from limited VSIB memory buffer
+ - reduced client ring buffer size from 8192 to 4096
+
+V1.1 CvsBuild 17:
+ - realtime server, removed extra delay before sending newly read VSIB block
+
+V1.1 CvsBuild 16:
+ - client, added 'set passphrase' option so the user is not prompted for the password, this
+   is used for e.g. scripting (of course, plaintext password in scripts then)
+	
+V1.1 CvsBuild 15:
+ - client, "get *", if the server sends full path names, place files in that same path
+   on client side if the path exists, otherwise place in current working directory
+

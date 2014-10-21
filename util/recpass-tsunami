@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+#  RECPASS-TSUNAMI -- remote-records one contiguous time slice to disk
+#
+#    ./recpass-tsunami scanName recordTimeInSecs
+# 
+#----------------------------------------------------------
+#  !! Edit these before use: !! 
+
+# -- Remote real-time Tsunami server (IP or Hostname) and password (default: kitten)
+TSUNAMISERVER="your.server.org"
+PASSPHRASE="kitten" 
+
+# -- Remote directory where to backup files to (blank: no backup)
+REMOTEDIR=
+# REMOTEDIR="./"
+
+# -- Local root directory where to place downloaded files
+ROOTDIR=/raid/t/
+
+# -- Recording data rate in bits/sec (check schedule or .prc file for this)
+# RATE=128000000
+RATE=256000000
+# RATE=512000000
+
+# -- Full path to the 'tsunami' client application directory
+TSCLIPATH=`which tsunami`
+# TSCLIPATH=/home/oper/cvs/tsunami-udp/client/tsunami
+
+#----------------------------------------------------------
+
+# -- Params check (should be improved with regexp...)
+if [ "$1" == "" ] || [ "$2" == "" ]; then
+   echo "Syntax: ./recpass-tsunami   Expt_StationID_scanName_UTCDateTime  recordingsecs"
+   echo "        ./recpass-tsunami   R1255_Mh_scan01_2006-12-19T11:00:00  60"
+   exit
+fi
+
+FILE=$1
+SECS=$2
+
+# -- Start the tsunami transfer
+pushd $ROOTDIR > /dev/null
+RECLEN=$(( $SECS * $RATE / 8 ))
+# FLEN="_flen=" # up to and including Tsunami v1.1 b41
+FLEN="_dl"      # since Tsunami v1.1 b42 and later
+TSCMD=" \
+  set passphrase $PASSPHRASE \
+  connect $TSUNAMISERVER \
+  set transcript yes \
+  get $REMOTEDIR$FILE$FLEN$RECLEN.evn \
+  close \
+  quit "
+echo -e "\n$0: $TSCLIPATH $TSCMD \n"
+$TSCLIPATH $TSCMD
+popd > /dev/null

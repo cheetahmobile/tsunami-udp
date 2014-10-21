@@ -1,0 +1,94 @@
+
+Get the code 
+============
+
+If you have not yet downloaded the source code, you can do so with
+an anonymous CVS checkout:
+
+   cvs -z3 -d:pserver:anonymous@tsunami-udp.cvs.sf.net:/cvsroot/tsunami-udp co -P tsunami-udp
+
+Later you can use the usual
+
+   cvs update
+
+command to get and merge updates from the CVS into your local copy 
+of the code.
+
+   
+Compiling
+=========   
+
+ If you want to build Tsunami for a big endian i.e. non-Intel platform,
+ first edit ./common/Makefile.am and see instructions there.
+
+ For compiling tsunami, simply use:
+
+   $ make
+
+ From the configure output errors find all those missing packages that you 
+ had never even heard of and install them, then try a ./configure again.
+
+ If there are ./configure complaints about Makefile.in or similar, try:
+
+   $ ./recompile.sh
+
+ That should build the entire tsunami, including everything in
+ the subdirectories (in /server, /client, etc).
+ To compile for Solaris see the ./configure flags in recompile.sh.
+
+ An optional 
+
+   $ sudo make install
+
+ will install the tsunami binaries onto the system. 
+ The binaries that will be installed are:
+
+   App              Name        From
+   Tsunami server   tsunamid    ./server/tsunamid 
+   Tsunami client   tsunami     ./client/tsunami
+   Realtime server  rttsunamid  ./rtserver/rttsunamid
+   Realtime client  rttsunami   ./rtclient/rttsunami
+
+ The binaries will be placed into /usr/local/bin or similar.
+
+ Contents of individual subdirectories can be recompiled with
+ for example
+
+   $ cd client
+   $ make clean
+   $ make
+
+ (Note that you first have to compile the entire 
+ source tree via './configure' and 'make'. Only after that you
+ can recompile individual subdirectories without problems)
+ 
+ 
+ Special compile settings
+ ========================
+
+ For real-time server:
+ 
+  ./rtserver/io.c 
+  
+    //#define MODE_34TH   
+    
+       uncomment to enable 3/4th rate transmission,
+       discards upper 4 channels (2 BBCs)
+                          
+ For normal client:
+  
+  ./client/protocol.c
+  
+    #define RETX_REQBLOCK_SORTING
+    
+       define to use linear sorting of blocks in the retransmit 
+       request, fast, discards duplicates, may improve disk I/O 
+       since more contiguous access on server side
+       
+ For compiling on Solaris:
+
+   $ ./configure CC=gcc CPPFLAGS=-Du_int64_t=uint64_t -Du_int32_t=uint32_t \
+       -Du_int16_t=uint16_t -Du_int8_t=uint8_t LIBS=-lsocket -lnsl -lrt 
+
+   If gcc is not avaliable one needs to remove the -Wall from EXTRA_FLAGS 
+   otherwise it fails.

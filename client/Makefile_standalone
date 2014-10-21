@@ -1,0 +1,8 @@
+
+SRC = command.c  config.c  io.c  main.c  network.c  network_v4.c  network_v6.c  protocol.c  ring.c  transcript.c \
+   ../common/common.c  ../common/error.c  ../common/md5.c
+
+CFLAGS = -Wall -O3 -I../common/ -I../include/ -pthread -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+
+tsunami: $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -o tsunami

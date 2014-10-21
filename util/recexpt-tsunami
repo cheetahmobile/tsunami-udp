@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+#  RECEXPT-TSUNAMI -- records given scans from a 
+#                     remote real-time Tsunami server
+#
+#  Very simple manual script for quick testing. You may
+#  prefer the 'makeTsunami-recexpt.sh' autogenerator for 
+#  real observations.
+#
+#----------------------------------------------------------
+# !! Edit before use: ./recpass-tsunami, and data below: !!
+
+SID=Mh
+EXPT=R1255
+
+SCANS=(
+# 	scanName_yyyy-mm-ddThh:mm:ss	secs
+	scan01_2006-12-19T10:58:00	60
+	scan02_2006-12-19T11:00:00	220
+	scan03_2006-12-19T11:15:00	300
+)
+
+#----------------------------------------------------------
+
+USC="_"
+for idx in $(seq 0 $((${#SCANS[@]} / 2 - 1)))
+do
+  idx2=$(($idx * 2))
+  echo "./recpass-tsunami "$EXPT$USC$SID$USC${SCANS[$idx2]}" ${SCANS[$(($idx2 + 1 ))]}"
+  ./recpass-tsunami "$EXPT$USC$SID$USC${SCANS[$idx2]}" ${SCANS[$(($idx2 + 1 ))]}
+done

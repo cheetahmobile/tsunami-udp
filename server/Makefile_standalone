@@ -1,0 +1,8 @@
+
+SRC = config.c  io.c  log.c  main.c  network.c  protocol.c  transcript.c \
+   ../common/common.c  ../common/error.c  ../common/md5.c
+
+CFLAGS = -Wall -O3 -I../common/ -I../include/ -pthread -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+
+tsunamid: $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -o tsunamid
