@@ -5,7 +5,7 @@ tsunami-udp
 
 Simple Usage
 ===========
- # Compile
+# Compile
 
     ./recompile.sh 
 
@@ -23,6 +23,7 @@ Simple Usage
 
 
     ./client/tsunami help
+
 
 TODO
 ===========
