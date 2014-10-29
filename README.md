@@ -11,11 +11,16 @@ Simple Usage
 
 # Server
 
-    ./server/tsunamid
+    ./server/tsunamid *
 
 # Client
 
     ./client/tsunami 
+    # Accept following commands:     close    connect    get    dir    help    quit    set
+
+# Full Command
+
+    ./client/tsunami connect your.server.add set udpport 51031 get path/to/yourfile quit
 
 # Enjoy
 
@@ -27,5 +32,4 @@ Simple Usage
 
 TODO
 ===========
-  * Client ports to modify
   * Nteractive difference
