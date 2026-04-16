@@ -1,5 +1,3 @@
-
-# this makefile will be overwritten on the first 'make' run
-
-all:
-	sh ./recompile.sh
+# 文档预览命令
+docs-preview:
+	cd docs && mkdocs serve

@@ -1,0 +1,30 @@
+site_name: tsunami-udp
+repo_url: https://github.com/your-repo/tsunami-udp
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+
+plugins:
+  - search
+  - markdownextradata
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+
+extra:
+  version: 1.0.0
+
+nav:
+  - 首页: index.md
+  - 教程:
+    - 快速开始: tutorials/quickstart.md
+  - API参考: reference/index.md
+  - 概念解析:
+    - 架构设计: explanation/architecture.md
+  - 开发指南:
+    - 贡献规范: CONTRIBUTING.md
